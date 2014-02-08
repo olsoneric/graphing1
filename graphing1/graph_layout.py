@@ -40,10 +40,13 @@ class GraphLayout(object):
 
     def layout(self):
         for node, children in self.connections.items():
-            self.add_node_connections(node, children)
+            self._add_node_connections(node, children)
 
-    def add_node_connections(self, node, children):
-        """If node doesn't exist, create a random position for it."""
+    def _add_node_connections(self, node, children):
+        """Spatially layout the nodes.
+
+        If node doesn't exist, create a random position for it.
+        """
         if node not in self.positions:
             if self.three_d:
                 self.positions[node] = random_point_3d(self.region)

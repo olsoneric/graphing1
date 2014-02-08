@@ -30,6 +30,8 @@ class GraphVisual(object):
         else:
             self.rect_size = tuple(rect_size)
 
+        self.lines_to_create = []
+
     def setup_node_visual(self, pos, size, imagefile):
         """Override in derived implementations.
         Create a texture or a similar object to render.
@@ -84,6 +86,8 @@ class GraphVisual(object):
         if self.id_to_label:
             self.assign_label(rect, node_id)
 
+        return rect
+
     def assign_label(self, rect, id_name):
         name = self.id_to_label.get(id_name, None)
 
@@ -108,14 +112,62 @@ class GraphVisual(object):
                 #print "ADDING LABELS5"
                 self.assign_label(rect, node_id)
 
+    def create_lines_to_children(self):
+        """
+        Create lines for the tuples in self.lines_to_create.
+
+
+        self.lines_to_create contains tuples of nodes.
+        This will call setup_line_visual(node_obj1, node_obj2)
+        """
+
+        remaining_lines_to_create = []
+        for (node_rect, child_id) in self.lines_to_create:
+            child_rect = self.rects.get(child_id)
+            if child_rect:
+                self.setup_line_visual(node_rect, child_rect)
+            else:
+                # Child visual doesn't exit yet, create one, and
+                # parent will try again next iteration.
+                self._create_node(child_id)
+                # Keep track of this tuple to try again.
+                remaining_lines_to_create.append((node_rect, child_rect))
+
+        self.lines_to_create = remaining_lines_to_create
+
+    def _create_node(self, node_id, position=None):
+
+        # If position is not provided yet, raise exception, layout should
+        # have created positions for all nodes by now.
+        if not position:
+            #position = self.graph_layout.positions.get(node_id, (0, 0))
+            raise Exception("No pos.  Create initial layout before visuals.")
+
+        rect = self.create_rect(node_id, position, self.rect_size)
+
+        # Will add lines - children may not exist, so store for later.
+        print "STORING:", rect
+        for child_id in self.graph_layout.connections[node_id]:
+            self.lines_to_create.append((rect, child_id))
+
+        return rect
+
     def update(self, seconds, state):
+        """
+        Update the positions of the nodes.
+
+        If visuals for the nodes do not exist yet, create them.
+        """
+
+        # TODO: remove state arg if possible
+
         #print "GRAPH_VISUAL UPDATE, changed:", self.graph_layout.changed
 
         for node_id in self.graph_layout.changed:
             position = self.graph_layout.positions[node_id]
             rect = self.rects.get(node_id)
             if not rect:
-                rect = self.create_rect(node_id, position, self.rect_size)
+                rect = self._create_node(node_id, position)
             else:
                 #rect.set_pos(position)
                 #rect.setPosRealPx(*position)
@@ -126,6 +178,9 @@ class GraphVisual(object):
                 #label.set_pos(position)
                 #label.setPosRealPx(*position)
                 self.set_pos_on_obj(label, position, state)
+
+        if self.lines_to_create:
+            self.create_lines_to_children()
 
     def collidepoint(self, pos):
         print "FIXME: make collide_point more optimal with bin"
