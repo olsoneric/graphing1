@@ -28,6 +28,8 @@ class GraphLayout(object):
         self.connections = connections
         self.positions = {}
         self.changed = set()
+        self.pending_changed_structure = set()
+        self.changed_structure = set()
         self.frame = 1
         # Physics-like nodes
         self.vels = {}
@@ -44,6 +46,48 @@ class GraphLayout(object):
     def layout(self):
         for node, children in self.connections.items():
             self._add_node_connections(node, children)
+
+    def add_connections(self, new_connections):
+        """
+        Expects an adjancency dict.
+
+        New connections are added to existing connection lists.
+        """
+        # print "ADD_CONNS:", new_connections
+
+        for node, children in new_connections.items():
+            # print "NODE:", node, "CHILDREN:", children, "CURRENT:", self.connections[node]
+            for child in children:
+                # print "BEFORE:", self.connections[node]
+                if child not in self.connections[node]:
+                    self.connections[node].append(child)
+                # print "AFTER:", self.connections[node]
+
+        for node, children in new_connections.items():
+            # Create position and vel for nodes
+            self._add_node_connections(node, children)
+
+            # print "Adding:", node, children
+            # Mark as changed to ensure visual links are added/removed.
+            # Include the full current list of nodes
+            all_children = self.connections[node]
+            # print "  Adding expect:", node, all_children
+            self.pending_changed_structure.add((node, tuple(all_children)))
+
+    def set_connections(self, new_connections):
+        """
+        Expects an adjancency dict.
+
+        New connections replace existing connection lists.
+        """
+        for node, children in new_connections.items():
+            self.connections[node] = list(children)
+
+        for node, children in new_connections.items():
+            self._set_node_connections(node, children)
+
+            # Mark as changed to ensure links are drawn
+            self.pending_changed_structure.add((node, tuple(children)))
 
     def _add_node_connections(self, node, children):
         """Spatially layout the nodes.
@@ -72,7 +116,15 @@ class GraphLayout(object):
         return self.positions[node]
 
     def update(self, seconds):
+        # Changed nodes have been updated/drawn, so clear them now.
         self.changed.clear()
+
+        # Clear old stucture changes
+        self.changed_structure.clear()
+        # Start any pending structure changes so visuals can process them.
+        self.changed_structure.update(self.pending_changed_structure)
+        # Clear pending changes
+        self.pending_changed_structure.clear()
         """
         for node in self.positions:
             self.positions[node] = (random.randrange(500),

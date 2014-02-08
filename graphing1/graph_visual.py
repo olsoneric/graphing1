@@ -1,4 +1,7 @@
 
+from collections import defaultdict
+
+
 # Temporary max until one is figured out
 MAX_RECTS = 200
 
@@ -34,6 +37,10 @@ class GraphVisual(object):
             self.rect_size = (80, 80)
         else:
             self.rect_size = tuple(rect_size)
+
+        # The connecting lines between nodes:
+        #   line_visuals[parent_id][child_id] = line_visual
+        self.line_visuals = defaultdict(lambda: defaultdict(list))
 
         self.lines_to_create = []
 
@@ -117,7 +124,13 @@ class GraphVisual(object):
                 #print "ADDING LABELS5"
                 self.assign_label(rect, node_id)
 
-    def create_lines_to_children(self):
+    def _create_line(self, node_id, child_id, node_rect, child_rect):
+        # Create line
+        if child_id not in self.line_visuals[node_id]:
+            line_visual = self.setup_line_visual(node_rect, child_rect)
+            self.line_visuals[node_id][child_id].append(line_visual)
+
+    def _create_lines_to_children(self):
         """
         Create lines for the tuples in self.lines_to_create.
 
@@ -127,16 +140,18 @@ class GraphVisual(object):
         """
 
         remaining_lines_to_create = []
-        for (node_rect, child_id) in self.lines_to_create:
+        for (node_rect, node_id, child_id) in self.lines_to_create:
             child_rect = self.rects.get(child_id)
             if child_rect:
-                self.setup_line_visual(node_rect, child_rect)
+                # Have a child to connect to, so create the line.
+                self._create_line(node_id, child_id, node_rect, child_rect)
             else:
                 # Child visual doesn't exit yet, create one, and
                 # parent will try again next iteration.
                 self._create_node(child_id)
                 # Keep track of this tuple to try again.
-                remaining_lines_to_create.append((node_rect, child_rect))
+                remaining_lines_to_create.append(
+                    (node_rect, node_id, child_id))
 
         self.lines_to_create = remaining_lines_to_create
 
@@ -153,9 +168,35 @@ class GraphVisual(object):
         # Will add lines - children may not exist, so store for later.
         print "STORING:", rect
         for child_id in self.graph_layout.connections[node_id]:
-            self.lines_to_create.append((rect, child_id))
+            self.lines_to_create.append((rect, node_id, child_id))
 
         return rect
+
+    def update_line_visuals_change_structure(self):
+        """
+        Create links if node structure has changed.
+        """
+
+        for node_id, children in self.graph_layout.changed_structure:
+            print "CHANGED:", node_id, children
+
+            # children is the parent's full list, so remove any old children.
+            existing_ids = set(self.line_visuals[node_id].keys())
+            old_ids = existing_ids.difference(set(children))
+            for old_id in old_ids:
+                print "REMOVING LINK:", node_id, old_id
+                self.remove_line_visual(self.line_visuals[node_id][old_id])
+
+            # Add any new children
+            new_children = set(children).difference(existing_ids)
+            for child_id in new_children:
+                rect = self.rects.get(node_id)
+                if rect:
+                    print "WILL ADD LINK:", node_id, child_id
+                    self.lines_to_create.append((rect, node_id, child_id))
+                else:
+                    raise Exception("No pos.  Create initial "
+                                    "layout before visuals.")
 
     def update(self, seconds, state):
         """
@@ -184,8 +225,11 @@ class GraphVisual(object):
                 #label.setPosRealPx(*position)
                 self.set_pos_on_obj(label, position, state)
 
+        # Update line visuals if links added or removed.
+        self.update_line_visuals_change_structure()
+
         if self.lines_to_create:
-            self.create_lines_to_children()
+            self._create_lines_to_children()
 
     def collidepoint(self, pos):
         print "FIXME: make collide_point more optimal with bin"
