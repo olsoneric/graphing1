@@ -19,11 +19,16 @@ class GraphVisual(object):
          """
         raise Exception("Unimplemented")
 
-    def __init__(self, graph_layout, rect_size=None):
+    def __init__(self, graph_layout, rect_size=None, imagefile=None):
         self.graph_layout = graph_layout
         self.rects = {}
         self.id_to_label = {}
         self.rect_labels = {}
+
+        if imagefile:
+            self.imagefile = imagefile
+        else:
+            self.imagefile = "images/face.png"
 
         if not rect_size:
             self.rect_size = (80, 80)
@@ -79,7 +84,7 @@ class GraphVisual(object):
         #    "data/images/face.png", pos=position, size=(80, 80))
         #precipice.add(rect)
         rect = self.setup_node_visual(
-            position, size=rect_size, imagefile="images/face.png")
+            position, size=rect_size, imagefile=self.imagefile)
         self.rects[node_id] = rect
 
         # Add label
