@@ -38,6 +38,9 @@ class GraphLayout(object):
         else:
             self.region = Rect(0, 0, 600, 500)
 
+        self.initial_max_dist = 10
+        self.closer_max_dist = 2.0
+
     def layout(self):
         for node, children in self.connections.items():
             self._add_node_connections(node, children)
@@ -162,9 +165,14 @@ class GraphLayout(object):
             v_pos = self.positions[v_node_id]
             v_vel = self.vels[v_node_id]
             dist = v_vel.x * v_vel.x + v_vel.y * v_vel.y
-            max_dist = 10
+            max_dist = self.initial_max_dist
+
+            # After the first 20 frames, require nodes to be closer
+            # to each other to affect each other.
             if self.frame > 20:
-                max_dist = 2.0
+                max_dist = self.closer_max_dist
+
+            # Only affect a node if it is closer than max_dist.
             if (dist > max_dist * max_dist):
                 dist = math.pow(dist, 0.5)
                 v_vel.x *= max_dist / dist
@@ -260,9 +268,13 @@ class GraphLayout(object):
             v_vel = self.vels[v_node_id]
             #dist = v_vel.x * v_vel.x + v_vel.y * v_vel.y
             dist = v_vel.x * v_vel.x + v_vel.y * v_vel.y + v_vel.z * v_vel.z
-            max_dist = 10
+            max_dist = self.initial_max_dist
+
+            # After the first 20 frames, require nodes to be closer
+            # to each other to affect each other.
             if self.frame > 20:
-                max_dist = 2.0
+                max_dist = self.closer_max_dist
+
             if (dist > max_dist * max_dist):
                 dist = math.pow(dist, 0.5)
                 v_vel.x *= max_dist / dist
