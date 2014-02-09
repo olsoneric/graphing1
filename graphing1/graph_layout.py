@@ -48,6 +48,7 @@ class GraphLayout(object):
 
         self.initial_max_dist = 10
         self.closer_max_dist = 2.0
+        self.num_frames_for_init = 20
 
     def layout(self):
         """Call once to initialize the layout."""
@@ -250,7 +251,7 @@ class GraphLayout(object):
 
             # After the first 20 frames, require nodes to be closer
             # to each other to affect each other.
-            if self.frame > 20:
+            if self.frame > self.num_frames_for_init:
                 max_dist = self.closer_max_dist
 
             # Only affect a node if it is closer than max_dist.
@@ -353,7 +354,7 @@ class GraphLayout(object):
 
             # After the first 20 frames, require nodes to be closer
             # to each other to affect each other.
-            if self.frame > 20:
+            if self.frame > self.num_frames_for_init:
                 max_dist = self.closer_max_dist
 
             if (dist > max_dist * max_dist):
