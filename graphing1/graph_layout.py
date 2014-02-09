@@ -25,7 +25,13 @@ def random_point_3d(rect_range):
 class GraphLayout(object):
 
     def __init__(self, connections=None, region=None, three_d=False):
+
         self.connections = connections
+        if connections is None:
+            self.connections = {}
+        else:
+            self.connections = dict(connections)
+
         self.positions = {}
         self.changed = set()
         self.pending_changed_structure = set()
