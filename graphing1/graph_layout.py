@@ -50,8 +50,10 @@ class GraphLayout(object):
         self.closer_max_dist = 2.0
 
     def layout(self):
+        """Call once to initialize the layout."""
+
         for node, children in self.connections.items():
-            self._add_node_connections(node, children)
+            self._add_node_connections_layout(node, children)
 
     def add_connections(self, new_connections):
         """
@@ -62,6 +64,10 @@ class GraphLayout(object):
         # print "ADD_CONNS:", new_connections
 
         for node, children in new_connections.items():
+            self.add_node_children(node, children)
+
+        """
+        for node, children in new_connections.items():
             # print "NODE:", node, "CHILDREN:", children, "CURRENT:", self.connections[node]
             for child in children:
                 # print "BEFORE:", self.connections[node]
@@ -71,7 +77,7 @@ class GraphLayout(object):
 
         for node, children in new_connections.items():
             # Create position and vel for nodes
-            self._add_node_connections(node, children)
+            self._add_node_connections_layout(node, children)
 
             # print "Adding:", node, children
             # Mark as changed to ensure visual links are added/removed.
@@ -79,6 +85,23 @@ class GraphLayout(object):
             all_children = self.connections[node]
             # print "  Adding expect:", node, all_children
             self.pending_changed_structure.add((node, tuple(all_children)))
+            """
+
+    def add_node_children(self, node, children):
+        """A single node alternative to add_connections."""
+
+        for child in children:
+            if child not in self.connections[node]:
+                self.connections[node].append(child)
+
+        # Create position and vel for nodes
+        self._add_node_connections_layout(node, children)
+
+        # Mark as changed to ensure visual links are added/removed.
+        # Include the full current list of nodes
+        all_children = self.connections[node]
+        # print "  Adding expect:", node, all_children
+        self.pending_changed_structure.add((node, tuple(all_children)))
 
     def set_connections(self, new_connections):
         """
@@ -95,7 +118,7 @@ class GraphLayout(object):
             # Mark as changed to ensure links are drawn
             self.pending_changed_structure.add((node, tuple(children)))
 
-    def _add_node_connections(self, node, children):
+    def _add_node_connections_layout(self, node, children):
         """Spatially layout the nodes.
 
         If node doesn't exist, create a random position for it.
