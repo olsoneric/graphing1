@@ -26,7 +26,6 @@ class GraphLayout(object):
 
     def __init__(self, connections=None, region=None, three_d=False):
 
-        self.connections = connections
         if connections is None:
             self.connections = {}
         else:
