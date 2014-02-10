@@ -25,7 +25,7 @@ def random_point_3d(rect_range):
 
 class GraphLayout(object):
 
-    def __init__(self, connections=None, region=None, three_d=False):
+    def __init__(self, connections=None, region=None, three_d=False, k=None):
 
         if connections is None:
             self.connections = defaultdict(list)
@@ -45,6 +45,12 @@ class GraphLayout(object):
             self.region = region
         else:
             self.region = Rect(0, 0, 600, 500)
+
+        # k is related to length of the edge.
+        if k is None:
+            self.k = min(self.region.width, self.region.height) / 3 * 2
+        else:
+            self.k = k
 
         self.initial_max_dist = 10
         self.closer_max_dist = 2.0
@@ -180,7 +186,7 @@ class GraphLayout(object):
         # K is related to how long the edges should be.
         #k = 400.0
         # Approximate earlier calculation of k
-        k = min(self.region.width, self.region.height) / 3 * 2
+        # k = min(self.region.width, self.region.height) / 3 * 2
 
         # C limits the speed of the movement. Things become slower over time.
         C = math.log(self.frame + 1) * 100
@@ -211,7 +217,7 @@ class GraphLayout(object):
                 #print "DIST:", dist
                 if (0 == dist):
                     continue
-                mul = k * k / (dist * dist * C)
+                mul = self.k * self.k / (dist * dist * C)
 
                 self.vels[v_node_id] += Vec2(d_x * mul, d_y * mul)
                 #v_vel.x += d_x * mul
@@ -230,7 +236,7 @@ class GraphLayout(object):
                 if (0 == dist):
                     continue
 
-                mul = dist * dist / k / C
+                mul = dist * dist / self.k / C
                 dxmul = dx * mul
                 dymul = dy * mul
                 # attract both nodes towards eachother.
@@ -274,7 +280,7 @@ class GraphLayout(object):
         # K is related to how long the edges should be.
         #k = 400.0
         # Approximate earlier calculation of k
-        k = min(self.region.width, self.region.height) / 3 * 2
+        # k = min(self.region.width, self.region.height) / 3 * 2
 
         # C limits the speed of the movement. Things become slower over time.
         C = math.log(self.frame + 1) * 100
@@ -307,7 +313,7 @@ class GraphLayout(object):
                 #print "DIST:", dist
                 if (0 == dist):
                     continue
-                mul = k * k / (dist * dist * C)
+                mul = self.k * self.k / (dist * dist * C)
 
                 #self.vels[v_node_id] += Vec2(d_x * mul, d_y * mul)
                 self.vels[v_node_id] += Vec3(d_x * mul, d_y * mul, d_z * mul)
@@ -329,7 +335,7 @@ class GraphLayout(object):
                 if (0 == dist):
                     continue
 
-                mul = dist * dist / k / C
+                mul = dist * dist / self.k / C
                 dxmul = dx * mul
                 dymul = dy * mul
                 dzmul = dz * mul
