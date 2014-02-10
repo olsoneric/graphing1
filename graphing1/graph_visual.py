@@ -22,7 +22,7 @@ class GraphVisual(object):
          """
         raise Exception("Unimplemented")
 
-    def __init__(self, graph_layout, rect_size=None, imagefile=None):
+    def __init__(self, graph_layout, rect_size=None, imagefile=None, font_size=None):
         self.graph_layout = graph_layout
         self.rects = {}
         self.id_to_label = {}
@@ -37,6 +37,8 @@ class GraphVisual(object):
             self.rect_size = (80, 80)
         else:
             self.rect_size = tuple(rect_size)
+
+        self.font_size = font_size
 
         # The connecting lines between nodes:
         #   line_visuals[parent_id][child_id] = line_visual
