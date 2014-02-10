@@ -30,7 +30,7 @@ class GraphLayout(object):
         if connections is None:
             self.connections = defaultdict(list)
         else:
-            self.connections = dict(connections)
+            self.connections = defaultdict(list, connections)
 
         self.positions = {}
         self.changed = set()
