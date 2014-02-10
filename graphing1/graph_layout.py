@@ -1,4 +1,5 @@
 
+from collections import defaultdict
 import math
 import random
 
@@ -27,7 +28,7 @@ class GraphLayout(object):
     def __init__(self, connections=None, region=None, three_d=False):
 
         if connections is None:
-            self.connections = {}
+            self.connections = defaultdict(list)
         else:
             self.connections = dict(connections)
 
